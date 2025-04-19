@@ -1,3 +1,5 @@
 .env
-deletelater.txt
 safile.json
+ActionSchema.yaml
+GPT_Config.txt
+test.py

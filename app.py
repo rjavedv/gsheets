@@ -2,10 +2,11 @@ from flask import Flask, request, jsonify
 from flask import abort
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import json
 from dotenv import load_dotenv
+
 
 load_dotenv()
 app = Flask(__name__)
@@ -14,21 +15,21 @@ API_SECRET_KEY = os.getenv('API_SECRET_KEY')
 
 # Google Sheets Setup
 SPREADSHEET_ID = '1q8tvTIuGhOD7dyjMXEuHSxrhRREWvTezcipBhgtG8EI'
-RANGE_NAME = 'Sheet1!A:C'  # Adjust if needed
-
+RANGE_NAME = 'Sheet1!A:D'  # Adjust if needed
+appenv = os.getenv('APP_ENV')
 ## Scope
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 # Load credentials
-# SERVICE_ACCOUNT_FILE = 'safile.json'
-# credentials = service_account.Credentials.from_service_account_file(
-#     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+SERVICE_ACCOUNT_FILE = 'safile.json'
+credentials = service_account.Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-SERVICE_ACCOUNT_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
-if not SERVICE_ACCOUNT_JSON:
-    raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
+# SERVICE_ACCOUNT_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
+# if not SERVICE_ACCOUNT_JSON:
+#     raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
 
-info = json.loads(SERVICE_ACCOUNT_JSON)
-credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+# info = json.loads(SERVICE_ACCOUNT_JSON)
+# credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
 
 
 service = build('sheets', 'v4', credentials=credentials)
@@ -58,7 +59,7 @@ def get_prompts():
         ).execute()
 
         rows = result.get('values', [])
-        headers = ['user_id', 'timestamp', 'prompt']
+        headers = ['user_id', 'timestamp', 'prompt', 'response']
         
         # Filter rows that match the requested user_id
         filtered = [dict(zip(headers, row)) for row in rows if row and row[0] == user_id]
@@ -75,12 +76,14 @@ def save_prompt():
         data = request.get_json()
         user_id = data.get('user_id', 'anonymous')
         prompt = data.get('prompt', '')
-        timestamp = datetime.utcnow().isoformat()
+        response_text = data.get('response', '')
+        #timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         if not prompt:
             return jsonify({'error': 'Prompt is required'}), 400
 
-        values = [[user_id, timestamp, prompt]]
+        values = [[user_id, timestamp, prompt, response_text]]
         body = {'values': values}
 
         result = sheet.values().append(
@@ -97,4 +100,7 @@ def save_prompt():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)    
+    if appenv == 'LOCAL':
+       app.run(port=port, debug=True)    
+    else:
+        app.run(host='0.0.0.0', port=port)    
