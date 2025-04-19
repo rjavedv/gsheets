@@ -20,16 +20,16 @@ appenv = os.getenv('APP_ENV')
 ## Scope
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 # Load credentials
-SERVICE_ACCOUNT_FILE = 'safile.json'
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+# SERVICE_ACCOUNT_FILE = 'safile.json'
+# credentials = service_account.Credentials.from_service_account_file(
+#     SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
-# SERVICE_ACCOUNT_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
-# if not SERVICE_ACCOUNT_JSON:
-#     raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
+SERVICE_ACCOUNT_JSON = os.getenv('GOOGLE_CREDENTIALS_JSON')
+if not SERVICE_ACCOUNT_JSON:
+    raise Exception("GOOGLE_CREDENTIALS_JSON environment variable not set")
 
-# info = json.loads(SERVICE_ACCOUNT_JSON)
-# credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+info = json.loads(SERVICE_ACCOUNT_JSON)
+credentials = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
 
 
 service = build('sheets', 'v4', credentials=credentials)
