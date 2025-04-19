@@ -38,7 +38,10 @@ sheet = service.spreadsheets()
 def check_auth():
     key = request.headers.get('X-API-KEY')
     if not key or key != API_SECRET_KEY:
+        print("check_auth failed")
         abort(403, description='Forbidden: Invalid API key, RJV')
+    else:
+        print("Check_auth success")
 
 
 @app.route('/get-prompts', methods=['GET'])
